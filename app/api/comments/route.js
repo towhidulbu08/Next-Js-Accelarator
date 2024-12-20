@@ -1,7 +1,15 @@
 import comments from "@/app/data/comments";
 
-comments;
-export async function GET() {
+export async function GET(req) {
+  const searchParams = req.nextUrl.searchParams;
+  const query = searchParams.get("query");
+  if (query) {
+    const filteredComments = comments.filter((comment) =>
+      comment.text.toLowerCase().includes(query)
+    );
+
+    return Response.json(filteredComments);
+  }
   return Response.json(comments);
 }
 export async function POST(request) {
