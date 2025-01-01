@@ -6,36 +6,33 @@ let defaultLocale = "en";
 let locales = ["en", "bn"];
 
 function getLocale(request) {
-    const acceptedLanguage =
-        request.headers.get("accept-language") ?? undefined;
-    const headers = { "accept-language": acceptedLanguage };
-    const languages = new Negotiator({ headers }).languages();
+  const acceptedLanguage = request.headers.get("accept-Language") ?? undefined;
 
-    return match(languages, locales, defaultLocale); // en or bn
+  let headers = { "accept-language": acceptedLanguage };
+  let languages = new Negotiator({ headers }).languages();
+  console.log(languages);
+  return match(languages, locales, defaultLocale);
 }
 
 export function middleware(request) {
-    // get the pathname from request url
-    const pathname = request.nextUrl.pathname;
+  //get the pathname from request url
+  const pathname = request.nextUrl.pathname;
+  const pathNameIsMissingLocale = locales.every(
+    (locale) =>
+      !pathname.startsWith(`/${locale}`) && !pathname.startsWith(`/${locale}/`)
+  );
 
-    const pathNameIsMissingLocale = locales.every(
-        (locale) =>
-            !pathname.startsWith(`/${locale}`) &&
-            !pathname.startsWith(`/${locale}/`)
+  if (pathNameIsMissingLocale) {
+    //  detect user's preference & redirect with a locale with a path eg: /en/about
+    const locale = getLocale(request);
+    return NextResponse.redirect(
+      new URL(`/${locale}/${pathname}`, request.url)
     );
+  }
 
-    if (pathNameIsMissingLocale) {
-        // detect user's preference & redirect with a locale with a path eg: /en/about
-        const locale = getLocale(request);
-
-        return NextResponse.redirect(
-            new URL(`/${locale}/${pathname}`, request.url)
-        );
-    }
-
-    return NextResponse.next();
+  return NextResponse.next();
 }
 
 export const config = {
-    matcher: ["/((?!_next).*)"],
+  matcher: ["/((?!_next).*)"],
 };
